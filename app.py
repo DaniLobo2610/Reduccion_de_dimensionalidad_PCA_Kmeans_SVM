@@ -23,6 +23,8 @@ st.title("🧠 Clasificador de Dígitos Manuscritos")
 
 st.write("""
 Aplicación desarrollada utilizando técnicas de Inteligencia Artificial.
+         
+##Realizada por: ALBERTO DANIEL LOBO - 20211900125
 
 ### Algoritmos implementados
 
@@ -166,7 +168,9 @@ info = pd.DataFrame({
 
         "Componentes PCA",
 
-        "Número de Clusters"
+        "Número de Clusters",
+
+        "Kernel_SVM"
 
     ],
 
