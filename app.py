@@ -101,12 +101,12 @@ def entrenar_modelo(n_componentes):
 
     st.write("Paso 3")
 
-    silhouette = silhouette_score(
-    X_pca,
-    clusters
-    )
-    st.write("Paso 4")
-    #silhouette = 0
+    #silhouette = silhouette_score(
+    #X_pca,
+    #clusters
+    #)
+    #st.write("Paso 4")
+    silhouette = 0
     
 
     # ==========================
@@ -120,7 +120,7 @@ def entrenar_modelo(n_componentes):
         random_state=42,
         stratify=y
     )
-    st.write("Paso 5")
+    st.write("Paso 4")
     # ==========================
     # SVM
     # ==========================
@@ -129,7 +129,7 @@ def entrenar_modelo(n_componentes):
 
     svm.fit(X_train, y_train)
 
-    st.write("Paso 6")
+    st.write("Paso 5")
 
     predicciones = svm.predict(X_test)
 
