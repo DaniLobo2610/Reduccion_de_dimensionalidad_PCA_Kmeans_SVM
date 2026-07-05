@@ -248,7 +248,7 @@ if "modelo" in st.session_state:
 
     st.dataframe(
     reporte_df.round(3),
-    use_container_width=True,
+    width="stretch",
     height=420
     )
 
