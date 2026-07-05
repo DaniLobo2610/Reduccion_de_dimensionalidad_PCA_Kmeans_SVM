@@ -1,0 +1,8 @@
+{
+    "componentes_pca": 30,
+    "accuracy": 0.9699,
+    "silhouette": 0.1015,
+    "varianza_explicada": 0.4586,
+    "n_clusters": 10,
+    "kernel_svm": "linear"
+}
