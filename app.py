@@ -70,6 +70,8 @@ def entrenar_modelo(n_componentes):
 
     X_scaled = scaler.fit_transform(X)
 
+    st.write("Paso 1")
+
     # ==========================
     # PCA
     # ==========================
@@ -83,6 +85,8 @@ def entrenar_modelo(n_componentes):
 
     varianza = pca.explained_variance_ratio_.sum()
 
+    st.write("Paso 2")
+
     # ==========================
     # K-Means
     # ==========================
@@ -95,12 +99,15 @@ def entrenar_modelo(n_componentes):
 
     clusters = kmeans.fit_predict(X_pca)
 
-    #silhouette = silhouette_score(
-    #X_pca,
-    #clusters
-    #)
+    st.write("Paso 3")
 
-    silhouette = 0
+    silhouette = silhouette_score(
+    X_pca,
+    clusters
+    )
+    st.write("Paso 4")
+    #silhouette = 0
+    
 
     # ==========================
     # Train/Test
@@ -113,7 +120,7 @@ def entrenar_modelo(n_componentes):
         random_state=42,
         stratify=y
     )
-
+    st.write("Paso 5")
     # ==========================
     # SVM
     # ==========================
@@ -121,6 +128,8 @@ def entrenar_modelo(n_componentes):
     svm = SVC(kernel="linear")
 
     svm.fit(X_train, y_train)
+
+    st.write("Paso 6")
 
     predicciones = svm.predict(X_test)
 
