@@ -152,8 +152,8 @@ st.header("Configuración del modelo")
 
 n_componentes = st.slider(
     "Número de componentes principales (PCA)",
-    min_value=2,
-    max_value=100,
+    min_value=30,
+    max_value=60,
     value=30
 )
 
