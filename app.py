@@ -95,10 +95,12 @@ def entrenar_modelo(n_componentes):
 
     clusters = kmeans.fit_predict(X_pca)
 
-    silhouette = silhouette_score(
-    X_pca,
-    clusters
-    )
+   # silhouette = silhouette_score(
+   # X_pca,
+   # clusters
+   # )
+
+    silhouette = 0
 
     # ==========================
     # Train/Test
