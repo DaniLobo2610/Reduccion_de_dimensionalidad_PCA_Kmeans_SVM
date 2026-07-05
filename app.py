@@ -149,7 +149,7 @@ with col3:
 
     st.metric(
         "Varianza explicada",
-        f"{metadata['varianza']*100:.2f}%"
+        f"{metadata['varianza_explicada']*100:.2f}%"
     )
 
 st.divider()
@@ -172,13 +172,15 @@ info = pd.DataFrame({
 
     "Valor":[
 
-        metadata["nombre_modelo"],
+        "MNIST PCA + K-Means + SVM",
 
-        metadata["dataset"],
+        "MNIST",
 
-        metadata["n_componentes"],
+        metadata["componentes_pca"],
 
-        metadata["n_clusters"]
+        metadata["n_clusters"],
+
+        metadata["kernel_svm"]
 
     ]
 
