@@ -118,7 +118,7 @@ def entrenar_modelo(n_componentes):
     # SVM
     # ==========================
 
-    svm = SVC(kernel="rbf")
+    svm = SVC(kernel="linear")
 
     svm.fit(X_train, y_train)
 
