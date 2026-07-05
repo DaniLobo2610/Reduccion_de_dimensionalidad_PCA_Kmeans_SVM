@@ -5,21 +5,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-from sklearn.cluster import KMeans
-from sklearn.svm import SVC
+import joblib
+import json
 
-from sklearn.model_selection import train_test_split
+from pathlib import Path
 
-from sklearn.metrics import (
-    accuracy_score,
-    classification_report,
-    silhouette_score
-)
+# ==========================================
+# CONFIGURACIÓN DE LA APLICACIÓN
 
-# ==========================
-# Configuración
 st.set_page_config(
     page_title="Clasificador MNIST",
     page_icon="🧠",
@@ -28,387 +21,335 @@ st.set_page_config(
 
 st.title("🧠 Clasificador de Dígitos Manuscritos")
 
-st.write(
-    """
-    Aplicación desarrollada utilizando:
+st.write("""
+Aplicación desarrollada utilizando técnicas de Inteligencia Artificial.
 
-    • PCA (Reducción de dimensionalidad)
+### Algoritmos implementados
 
-    • K-Means (Clustering)
+• PCA (Principal Component Analysis)
 
-    • Support Vector Machine (Clasificación)
+• K-Means
 
-    REALIZADA POR ALBERTO DANIEL LOBO - 20211900125 - CLASE DE IA
+• Support Vector Machine (SVM)
 
-    NOTA: Estimado usuario si quiere vivir toda la experiencia con este modelo le recomiendo tomar en cuenta lo siguiente: 
+La aplicación permite comparar distintos modelos entrenados utilizando
+10, 20, 30, 40 y 50 componentes principales.
+""")
 
-    • Despues de escoger los componentes a utilizar y entrenar el modelo; Si desea cambiar de componentes lo recomendable es volver a entrenar. 
 
-    • Todo está explicado para mantener el orden y la compresión suya y mia
-
-    • En la ultima parte donde se genera la imagen seleccionada por el modelo, en la parte de abajo hay un boton para mostrar resultados
-    """
-)
+# ==========================================
+# CARGAR DATASET
 
 df = pd.read_csv("train.csv")
 
+X = df.drop("label", axis=1)
+
+y = df["label"]
+
+
+
+# ==========================================
+# CARPETA DE MODELOS
+
+BASE_MODELOS = Path("modelos")
+
+
 @st.cache_resource
-def entrenar_modelo(n_componentes):
+def cargar_modelo(componentes):
 
-    # ==========================
-    # Separar variables
-    # ==========================
+    carpeta = BASE_MODELOS / f"modelo_{componentes}"
 
-    X = df.drop("label", axis=1)
-    y = df["label"]
+    modelo = {
 
-    # ==========================
-    # Escalamiento
-    # ==========================
+        "scaler": joblib.load(carpeta / "scaler.pkl"),
 
-    scaler = StandardScaler()
+        "pca": joblib.load(carpeta / "pca.pkl"),
 
-    X_scaled = scaler.fit_transform(X)
+        "kmeans": joblib.load(carpeta / "kmeans.pkl"),
 
-    st.write("Paso 1")
-
-    # ==========================
-    # PCA
-    # ==========================
-
-    pca = PCA(
-        n_components=n_componentes,
-        random_state=42
-    )
-
-    X_pca = pca.fit_transform(X_scaled)
-
-    varianza = pca.explained_variance_ratio_.sum()
-
-    st.write("Paso 2")
-
-    # ==========================
-    # K-Means
-    # ==========================
-
-    kmeans = KMeans(
-        n_clusters=10,
-        random_state=42,
-        n_init=10
-    )
-
-    clusters = kmeans.fit_predict(X_pca)
-
-    st.write("Paso 3")
-
-    #silhouette = silhouette_score(
-    #X_pca,
-    #clusters
-    #)
-    #st.write("Paso 4")
-    silhouette = 0
-    
-
-    # ==========================
-    # Train/Test
-    # ==========================
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_pca,
-        y,
-        test_size=0.20,
-        random_state=42,
-        stratify=y
-    )
-    st.write("Paso 4")
-    # ==========================
-    # SVM
-    # ==========================
-
-    svm = SVC(kernel="linear")
-
-    svm.fit(X_train, y_train)
-
-    st.write("Paso 5")
-
-    predicciones = svm.predict(X_test)
-
-    accuracy = accuracy_score(
-        y_test,
-        predicciones
-    )
-
-    reporte = classification_report(
-        y_test,
-        predicciones,
-        output_dict=True
-    )
-
-    return (
-        scaler,
-        pca,
-        kmeans,
-        svm,
-        X,
-        y,
-        X_pca,
-        clusters,
-        accuracy,
-        reporte,
-        silhouette,
-        varianza
-    )
-
-st.header("Configuración del modelo")
-
-n_componentes = st.slider(
-    "Número de componentes principales (PCA)",
-    min_value=30,
-    max_value=35,
-    value=30
-)
-
-if st.button("Entrenar Modelo"):
-
-    with st.spinner("Entrenando modelo..."):
-
-        (
-            scaler,
-            pca,
-            kmeans,
-            svm,
-            X,
-            y,
-            X_pca,
-            clusters,
-            accuracy,
-            reporte,
-            silhouette,
-            varianza
-        ) = entrenar_modelo(n_componentes)
-
-    st.success("Modelo entrenado correctamente.")
-
-    
-    st.session_state["modelo"] = {
-
-        "scaler": scaler,
-
-        "pca": pca,
-
-        "kmeans": kmeans,
-
-        "svm": svm,
-
-        "X": X,
-
-        "y": y,
-
-        "X_pca": X_pca,
-
-        "clusters": clusters,
-
-        "accuracy": accuracy,
-
-        "reporte": reporte,
-
-        "silhouette": silhouette,
-
-        "varianza": varianza
+        "svm": joblib.load(carpeta / "svm.pkl")
 
     }
 
-if "modelo" in st.session_state:
+    with open(carpeta / "metadata.json", encoding="utf-8") as f:
 
-    modelo = st.session_state["modelo"]
+        modelo["metadata"] = json.load(f)
 
-    st.header("Resultados del modelo")
-
-    st.write("""
-        Las siguientes métricas permiten evaluar el desempeño del clasificador SVM
-        utilizando los datos transformados mediante PCA.
-        """)
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.metric(
-            "Accuracy",
-            f"{modelo['accuracy']*100:.2f}%"
-        )
-
-    with col2:
-        st.metric(
-            "Silhouette",
-            f"{modelo['silhouette']:.3f}"
-        )
-
-    with col3:
-        st.metric(
-            "Varianza explicada",
-            f"{modelo['varianza']*100:.2f}%"
-        )
-    
-    st.divider()
-
-    st.subheader("Reporte de Clasificación")
-
-    reporte_df = pd.DataFrame(
-        modelo["reporte"]
-    ).transpose()
-
-    st.dataframe(
-    reporte_df.round(3),
-    width="stretch",
-    height=420
+    modelo["clusters"] = pd.read_csv(
+        carpeta / "mnist_clusters.csv"
     )
 
-    st.header("Visualización PCA y Clusters")
-
-    df_pca = pd.DataFrame(
-        modelo["X_pca"][:, :2],
-        columns=["PC1", "PC2"]
+    modelo["metricas"] = pd.read_csv(
+        carpeta / "svm_metricas.csv"
     )
 
-    df_pca["cluster"] = modelo["clusters"]
+    return modelo
 
-    st.info(
-        f"""
-        Se utilizarán **{n_componentes} componentes principales** para reducir la dimensionalidad
-        de las imágenes antes de aplicar K-Means y SVM.
-        """
+
+# ==========================================
+# CONFIGURACIÓN DEL MODELO
+
+st.header("Configuración del Modelo")
+
+st.write("""
+Seleccione el número de componentes principales (PCA) con el que desea
+trabajar. Cada opción corresponde a un modelo previamente entrenado.
+""")
+
+
+n_componentes = st.select_slider(
+    "Número de componentes principales",
+    options=[10, 20, 30, 40, 50],
+    value=30
+)
+
+
+with st.spinner("Cargando modelo..."):
+
+    modelo = cargar_modelo(n_componentes)
+
+st.success(
+    f"Se cargó correctamente el modelo entrenado con {n_componentes} componentes principales."
+)
+
+
+# ==========================================
+# RESULTADOS DEL MODELO
+st.header("Resultados del Modelo")
+
+st.write("""
+Las siguientes métricas corresponden al modelo previamente entrenado
+utilizando la cantidad de componentes principales seleccionada.
+""")
+
+metadata = modelo["metadata"]
+
+metricas = modelo["metricas"]
+
+
+
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+
+    st.metric(
+        "Accuracy",
+        f"{metricas['Accuracy'][0]*100:.2f}%"
     )
 
+with col2:
 
-    st.write("""
-    Cada punto representa una imagen del conjunto de datos MNIST.
-
-    Los colores indican el **cluster** al que fue asignada cada imagen por el algoritmo K-Means.
-
-    La posición de los puntos corresponde a la proyección de las imágenes utilizando las dos primeras componentes principales (PCA).
-    """)
-
-    fig, ax = plt.subplots(figsize=(10,7))
-
-    sns.scatterplot(
-        data=df_pca,
-        x="PC1",
-        y="PC2",
-        hue="cluster",
-        palette="tab10",
-        s=20,
-        alpha=0.7,
-        ax=ax
+    st.metric(
+        "Silhouette",
+        f"{metricas['Silhouette'][0]:.3f}"
     )
 
-    st.success("""
-        Conclusión:
+with col3:
 
-        La proyección en dos dimensiones permite observar cómo K-Means agrupó
-        las imágenes de acuerdo con sus características después de aplicar PCA.
-        """)
+    st.metric(
+        "Varianza explicada",
+        f"{metadata['varianza']*100:.2f}%"
+    )
 
-    ax.set_title("Clusters obtenidos mediante PCA + K-Means")
+st.divider()
+
+st.subheader("Información del Modelo")
+
+info = pd.DataFrame({
+
+    "Propiedad":[
+
+        "Nombre del modelo",
+
+        "Dataset",
+
+        "Componentes PCA",
+
+        "Número de Clusters"
+
+    ],
+
+    "Valor":[
+
+        metadata["nombre_modelo"],
+
+        metadata["dataset"],
+
+        metadata["n_componentes"],
+
+        metadata["n_clusters"]
+
+    ]
+
+})
+
+st.dataframe(
+    info,
+    width="stretch"
+)
+
+
+st.divider()
+
+st.header("Visualización PCA + K-Means")
+
+
+st.write("""
+Cada punto representa una imagen del conjunto de datos MNIST.
+
+Las imágenes fueron proyectadas mediante PCA a dos dimensiones.
+
+Posteriormente K-Means agrupó automáticamente las imágenes en diez grupos.
+""")
+
+
+df_pca = modelo["clusters"]
+
+fig, ax = plt.subplots(figsize=(10,7))
+
+sns.scatterplot(
+
+    data=df_pca,
+
+    x="PC1",
+
+    y="PC2",
+
+    hue="cluster",
+
+    palette="tab10",
+
+    s=20,
+
+    alpha=0.7,
+
+    ax=ax
+
+)
+
+ax.set_title("Clusters generados mediante PCA + K-Means")
+
+st.pyplot(fig)
+plt.close(fig)
+
+st.info("""
+Interpretación
+
+• Cada punto representa una imagen.
+
+• Los colores representan el grupo encontrado por K-Means.
+
+• Imágenes cercanas poseen características similares.
+
+• El gráfico utiliza únicamente las dos primeras componentes principales para facilitar la visualización.
+""")
+
+# ==========================================
+# CLASIFICACIÓN DE UN DÍGITO
+
+st.divider()
+
+st.header("Clasificación de un Dígito")
+
+st.write("""
+Seleccione una imagen del conjunto de datos MNIST.
+
+El modelo transformará la imagen mediante PCA y posteriormente
+realizará la clasificación utilizando Support Vector Machine (SVM).
+""")
+
+
+indice = st.slider(
+    "Seleccione una imagen",
+    min_value=0,
+    max_value=len(df)-1,
+    value=0
+)
+
+
+imagen = X.iloc[indice]
+
+etiqueta_real = y.iloc[indice]
+
+
+col1, col2 = st.columns([1,2])
+
+with col1:
+
+    st.subheader("Imagen")
+
+    fig, ax = plt.subplots(figsize=(2.5,2.5))
+
+    ax.imshow(
+        imagen.values.reshape(28,28),
+        cmap="gray"
+    )
+
+    ax.axis("off")
 
     st.pyplot(fig)
 
-    st.info("""
-    Interpretación:
 
-    • Cada punto corresponde a un dígito manuscrito.
+with col2:
 
-    • Los colores representan los grupos encontrados automáticamente por K-Means.
+    st.subheader("Información")
 
-    • Puntos cercanos poseen características similares.
+    st.write(f"Índice seleccionado: **{indice}**")
 
-    • Puntos alejados representan imágenes con patrones diferentes.
-    """)
+    st.write(f"Etiqueta real: **{etiqueta_real}**")
+
+
+if st.button("Clasificar Imagen"):
+
+    imagen_df = pd.DataFrame([imagen])
+
+    imagen_escalada = modelo["scaler"].transform(
+        imagen_df
+    )
+
+    imagen_pca = modelo["pca"].transform(
+        imagen_escalada
+    )
+
+    prediccion = modelo["svm"].predict(
+        imagen_pca
+    )[0]
+
+    st.subheader("Resultado")
+
+    c1, c2 = st.columns(2)
+
+    with c1:
+
+        st.metric(
+            "Etiqueta Real",
+            int(etiqueta_real)
+        )
+
+    with c2:
+
+        st.metric(
+            "Predicción SVM",
+            int(prediccion)
+        )
+
+    if prediccion == etiqueta_real:
+
+        st.success(
+            "✅ El modelo clasificó correctamente la imagen."
+        )
+
+    else:
+
+        st.error(
+            "❌ El modelo no clasificó correctamente la imagen."
+        )
 
     st.divider()
 
-    st.header("Clasificación de un Dígito")
+    st.caption("""
+    Proyecto desarrollado para la asignatura de Inteligencia Artificial.
 
-    indice = st.number_input(
-        "Índice de la imagen",
-        min_value=0,
-        max_value=len(modelo["X"]) - 1,
-        value=0,
-        step=1
-    )
-
-    imagen = modelo["X"].iloc[indice]
-    etiqueta_real = modelo["y"].iloc[indice]
-
-
-    st.subheader("Imagen seleccionada")
-
-    col1, col2 = st.columns([1,3])
-
-    with col1:
-
-        fig, ax = plt.subplots(figsize=(2,2))
-
-        ax.imshow(
-            imagen.values.reshape(28,28),
-            cmap="gray",
-            interpolation="nearest"
-        )
-
-        ax.axis("off")
-
-        st.pyplot(fig)
-
-    with col2:
-
-        st.write("""
-        Esta es la imagen seleccionada del conjunto de datos MNIST
-        que será clasificada por el modelo SVM.
-        """)
-
-
-    if st.button("Clasificar Imagen"):
-        imagen_df = pd.DataFrame([imagen])
-
-        imagen_escalada = modelo["scaler"].transform(imagen_df)
-
-        imagen_pca = modelo["pca"].transform(imagen_escalada)
-
-
-        prediccion = modelo["svm"].predict(imagen_pca)[0]
-
-
-        st.subheader("Resultado de la Clasificación")
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.metric(
-                "Etiqueta Real",
-                int(etiqueta_real)
-            )
-
-        with col2:
-            st.metric(
-                "Predicción SVM",
-                int(prediccion)
-            )
-
-
-        if prediccion == etiqueta_real:
-
-            st.success("""
-            ✅ El modelo clasificó correctamente el dígito.
-            """)
-
-        else:
-
-            st.error("""
-            ❌ El modelo no clasificó correctamente el dígito.
-            """)
-
-
-        st.info("""
-        La imagen seleccionada fue transformada mediante PCA utilizando el número de componentes elegido y posteriormente clasificada por el modelo Support Vector Machine (SVM).
-        """)
-
-
+    Modelo basado en PCA + K-Means + Support Vector Machine utilizando el conjunto de datos MNIST.
+    """)
